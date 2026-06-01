@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COBOM — Painel Operacional</title>
+<style>
+  :root {
+    --verde: #1D9E75; --verde-bg: #E1F5EE;
+    --amber: #BA7517; --amber-bg: #FAEEDA;
+    --red:   #A32D2D; --red-bg:   #FCEBEB;
+    --blue:  #185FA5; --blue-bg:  #E6F1FB;
+    --gray:  #5F5E5A; --gray-bg:  #F1EFE8;
+    --text:  #1a1a18; --text2: #6b6a65; --text3: #9c9a92;
+    --bg:    #f5f4f0; --card: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --radius: 10px; --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* HEADER */
+  .header { background: #1a1a18; color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; position: sticky; top: 0; z-index: 100; }
+  .header-left h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.02em; }
+  .header-left .sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .pill-verde { background: var(--verde-bg); color: var(--verde); }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+  .pill-red   { background: var(--red-bg);   color: var(--red); }
+  .pill-blue  { background: var(--blue-bg);  color: var(--blue); }
+  .pill-gray  { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .dot-verde { background: var(--verde); }
+  .dot-amber { background: #EF9F27; }
+  .dot-red   { background: var(--red); }
+  .dot-gray  { background: var(--gray); }
+
+  /* UPDATE BAR */
+  .update-bar { background: #2a2a28; color: rgba(255,255,255,0.5); font-size: 11px; padding: 5px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--verde); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 12px 0; }
+  @media(max-width:500px){ .stats { grid-template-columns: repeat(2,1fr); } }
+  .stat { background: var(--card); border-radius: var(--radius); padding: 12px 14px; border: 0.5px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .stat-value { font-size: 26px; font-weight: 600; line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .val-verde { color: var(--verde); }
+  .val-amber { color: var(--amber); }
+  .val-red   { color: var(--red); }
+
+  /* SEARCH */
+  .search-bar { padding: 10px 12px; }
+  .search-bar input { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--card); font-size: 13px; color: var(--text); outline: none; }
+  .search-bar input:focus { border-color: #888; }
+
+  /* SECTION */
+  .section { padding: 0 12px 8px; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+
+  /* STATION CARD */
+  .station { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 8px; overflow: hidden; }
+  .station-header { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; user-select: none; }
+  .station-header:hover { background: #fafaf8; }
+  .station-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .station-info { flex: 1; min-width: 0; }
+  .station-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .station-fone { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .station-badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+  .chevron { font-size: 11px; color: var(--text3); transition: transform 0.2s; margin-left: 4px; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* STATION BODY */
+  .station-body { display: none; border-top: 0.5px solid var(--border); }
+  .station-body.open { display: block; }
+  .vtr-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; border-bottom: 0.5px solid var(--border); }
+  .vtr-row:last-child { border-bottom: none; }
+  .vtr-status-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .vtr-id { font-size: 12px; font-weight: 600; color: var(--blue); min-width: 88px; }
+  .vtr-crew { font-size: 12px; color: var(--text); flex: 1; line-height: 1.5; }
+  .vtr-qt { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .vtr-status-lbl { font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .lbl-disponivel { color: var(--verde); }
+  .lbl-atendimento { color: var(--amber); }
+  .lbl-manutencao, .lbl-baixada { color: var(--red); }
+  .lbl-reserva { color: var(--gray); }
+
+  .info-block { padding: 8px 14px 10px; display: flex; flex-wrap: wrap; gap: 6px 20px; background: #fafaf8; }
+  .info-item { font-size: 11px; color: var(--text2); }
+  .info-item strong { color: var(--text); font-weight: 500; }
+
+  /* COBOM BLOCK */
+  .cobom-block { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px; margin-bottom: 8px; }
+  .cobom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  @media(max-width:400px){ .cobom-grid { grid-template-columns:1fr; } }
+  .cobom-col h4 { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .cobom-person { font-size: 12px; color: var(--text); padding: 2px 0; }
+  .cobom-person span { color: var(--text2); }
+
+  /* LOADING / ERROR */
+  .loading { text-align: center; padding: 40px 20px; color: var(--text2); font-size: 13px; }
+  .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--text2); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { background: var(--red-bg); color: var(--red); border-radius: var(--radius); padding: 14px; margin: 12px; font-size: 13px; }
+
+  /* FOOTER */
+  .footer { text-align: center; font-size: 11px; color: var(--text3); padding: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>COBOM — Painel Operacional</h1>
+    <div class="sub" id="hdr-sub">Carregando...</div>
+  </div>
+  <div class="header-right">
+    <span class="pill pill-verde" id="pill-pront"><span class="dot dot-verde"></span>VERDE</span>
+    <span class="pill pill-gray" id="pill-ef">— mil.</span>
+  </div>
+</div>
+
+<div class="update-bar">
+  <div class="pulse"></div>
+  <span id="upd-time">Conectando...</span>
+  <span>·</span>
+  <span id="upd-status">Aguardando dados</span>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Efetivo total</div>
+    <div class="stat-value" id="s-ef">—</div>
+    <div class="stat-sub" id="s-ef-sub">militares</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Disponíveis</div>
+    <div class="stat-value val-verde" id="s-disp">—</div>
+    <div class="stat-sub" id="s-disp-sub">viaturas</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Em atendimento</div>
+    <div class="stat-value val-amber" id="s-atend">—</div>
+    <div class="stat-sub">viaturas</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Manutenção / baixada</div>
+    <div class="stat-value val-red" id="s-manut">—</div>
+    <div class="stat-sub">viaturas</div>
+  </div>
+</div>
+
+<div class="search-bar">
+  <input type="search" id="busca" placeholder="Buscar estação, viatura ou militar..." oninput="filtrar(this.value)">
+</div>
+
+<div class="section">
+  <div class="section-title">COBOM</div>
+  <div class="cobom-block" id="cobom-block">
+    <div class="loading"><div class="spinner"></div>Carregando...</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Estações e bases</div>
+  <div id="stations-list">
+    <div class="loading"><div class="spinner"></div>Buscando dados da planilha...</div>
+  </div>
+</div>
+
+<div class="footer">COBOM · Dados atualizados da planilha Google Sheets · <span id="ft-time"></span></div>
+
+<script>
+// ============================================================
+// SUBSTITUA pela URL gerada no Google Apps Script
+// Extensões > Apps Script > Implantar > Nova implantação
+// ============================================================
+const SCRIPT_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
+const REFRESH_MS = 60000; // atualiza a cada 60 segundos
+
+const icones = { disponivel:"🟢", atendimento:"🟡", manutencao:"🔴", baixada:"🔴", reserva:"⚫" };
+const dotCls = { disponivel:"dot-verde", atendimento:"dot-amber", manutencao:"dot-red", baixada:"dot-red", reserva:"dot-gray" };
+const lblCls = { disponivel:"lbl-disponivel", atendimento:"lbl-atendimento", manutencao:"lbl-manutencao", baixada:"lbl-baixada", reserva:"lbl-reserva" };
+const lblTxt = { disponivel:"Disponível", atendimento:"Em atendimento", manutencao:"Manutenção", baixada:"Baixada", reserva:"Reserva" };
+const estIcons = ["🚒","🏥","🚒","🚒","🚒","🚒","🚒","🏕️","🚒","🚒","🚒","🚒","🚒","🚒","🏕️"];
+const estColors = ["#E1F5EE","#E6F1FB","#FAEEDA","#E1F5EE","#E6F1FB","#FAEEDA","#E1F5EE","#F1EFE8","#E6F1FB","#FAEEDA","#E1F5EE","#E6F1FB","#FAEEDA","#E1F5EE","#F1EFE8"];
+
+let dadosGlobais = null;
+
+async function carregar() {
+  try {
+    document.getElementById("upd-status").textContent = "Buscando dados...";
+    const resp = await fetch(SCRIPT_URL + "?t=" + Date.now());
+    if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
+    const dados = await resp.json();
+    dadosGlobais = dados;
+    renderizar(dados);
+    document.getElementById("upd-time").textContent = "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
+    document.getElementById("upd-status").textContent = "Conectado à planilha";
+    document.getElementById("ft-time").textContent = dados.atualizacao || "";
+  } catch(e) {
+    document.getElementById("upd-status").textContent = "Erro ao carregar dados";
+    document.getElementById("stations-list").innerHTML =
+      `<div class="error-msg">Não foi possível carregar os dados da planilha.<br><br>Verifique se a URL do Apps Script está correta no arquivo index.html e se a implantação está configurada como pública.<br><br><small>Erro: ${e.message}</small></div>`;
+  }
+}
+
+function renderizar(dados, filtro) {
+  // Header
+  document.getElementById("hdr-sub").textContent = dados.prontidao || "Prontidão ativa";
+  if (dados.coordenador) {
+    document.getElementById("pill-pront").innerHTML = '<span class="dot dot-verde"></span>VERDE';
+  }
+
+  // Stats
+  let efTotal=0, disp=0, atend=0, manut=0, totalVtrs=0;
+  (dados.estacoes||[]).forEach(e => {
+    efTotal += e.efetivo||0;
+    (e.vtrs||[]).forEach(v => {
+      totalVtrs++;
+      if(v.status==="disponivel") disp++;
+      else if(v.status==="atendimento") atend++;
+      else if(v.status==="manutencao"||v.status==="baixada") manut++;
+    });
+  });
+  document.getElementById("s-ef").textContent = efTotal;
+  document.getElementById("s-ef-sub").textContent = (dados.estacoes||[]).length + " estações/bases";
+  document.getElementById("s-disp").textContent = disp;
+  document.getElementById("s-disp-sub").textContent = "de " + totalVtrs + " viaturas";
+  document.getElementById("s-atend").textContent = atend;
+  document.getElementById("s-manut").textContent = manut;
+  document.getElementById("pill-ef").textContent = efTotal + " mil.";
+
+  // COBOM
+  const cb = dados.cobom || {};
+  document.getElementById("cobom-block").innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <div style="font-size:13px;font-weight:600">Central de Operações</div>
+      <div style="font-size:12px;color:var(--text2)">${cb.fone||""}</div>
+    </div>
+    <div class="cobom-grid">
+      <div class="cobom-col">
+        <h4>Diurno</h4>
+        <div class="cobom-person"><span>Chefe:</span> ${cb.chefeDiurno||"—"}</div>
+        <div class="cobom-person"><span>Despach.:</span> ${cb.despachDiurno||"—"}</div>
+        <div class="cobom-person"><span>CECOM:</span> ${cb.cecomDiurno||"—"}</div>
+      </div>
+      <div class="cobom-col">
+        <h4>Noturno</h4>
+        <div class="cobom-person"><span>Chefe:</span> ${cb.chefeNoturno||"—"}</div>
+        <div class="cobom-person"><span>Despach.:</span> ${cb.despachNoturno||"—"}</div>
+        <div class="cobom-person"><span>CECOM:</span> ${cb.cecomNoturno||"—"}</div>
+      </div>
+    </div>
+    ${dados.coordenador ? `
+    <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;flex-wrap:wrap;gap:6px 20px">
+      <div class="info-item"><strong>Coord. Op.:</strong> ${dados.coordenador.nome||""} ${dados.coordenador.fone ? "· "+dados.coordenador.fone : ""}</div>
+      ${dados.supervisor ? `<div class="info-item"><strong>Supervisor:</strong> ${dados.supervisor.nome||""} ${dados.supervisor.fone ? "· "+dados.supervisor.fone : ""}</div>` : ""}
+      ${dados.cmtArea ? `<div class="info-item"><strong>Cmt Área:</strong> ${dados.cmtArea.nome||""} ${dados.cmtArea.fone ? "· "+dados.cmtArea.fone : ""}</div>` : ""}
+      ${dados.ofMergulho ? `<div class="info-item"><strong>Of. Mergulho:</strong> ${dados.ofMergulho.nome||""} ${dados.ofMergulho.fone ? "· "+dados.ofMergulho.fone : ""}</div>` : ""}
+    </div>` : ""}
+  `;
+
+  // Estações
+  const estacoes = (dados.estacoes||[]).filter(e => {
+    if (!filtro) return true;
+    const f = filtro.toLowerCase();
+    if (e.nome.toLowerCase().includes(f)) return true;
+    return (e.vtrs||[]).some(v =>
+      v.id.toLowerCase().includes(f) || v.guarni.toLowerCase().includes(f)
+    );
+  });
+
+  if (estacoes.length === 0) {
+    document.getElementById("stations-list").innerHTML =
+      `<div class="loading">Nenhum resultado para "${filtro}".</div>`;
+    return;
+  }
+
+  document.getElementById("stations-list").innerHTML = estacoes.map((est, idx) => {
+    const dispN = (est.vtrs||[]).filter(v=>v.status==="disponivel").length;
+    const total = (est.vtrs||[]).length;
+    const pillCls = dispN===total ? "pill-verde" : dispN===0 ? "pill-red" : "pill-amber";
+    const icon = estIcons[idx] || "🚒";
+    const iconBg = estColors[idx] || "#E1F5EE";
+
+    const vtrsHtml = (est.vtrs||[]).map(v => `
+      <div class="vtr-row">
+        <div class="vtr-status-dot ${dotCls[v.status]||'dot-gray'}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+            <span class="vtr-id">${v.id}</span>
+            <span class="vtr-status-lbl ${lblCls[v.status]||''}">${lblTxt[v.status]||v.status}</span>
+            ${v.qt ? `<span class="vtr-qt">${v.qt} mil.</span>` : ""}
+            ${v.fone ? `<span class="vtr-qt">${v.fone}</span>` : ""}
+          </div>
+          <div class="vtr-crew">${v.guarni}</div>
+        </div>
+      </div>`).join("");
+
+    const infoItems = [
+      est.dejem       ? `<div class="info-item"><strong>DEJEM:</strong> ${est.dejem}</div>` : "",
+      est.reserva     ? `<div class="info-item"><strong>Reserva:</strong> ${est.reserva}</div>` : "",
+      est.baixada     ? `<div class="info-item"><strong>Baixada:</strong> ${est.baixada}</div>` : "",
+      est.embarcacoes ? `<div class="info-item"><strong>Embarcações:</strong> ${est.embarcacoes}</div>` : "",
+      est.obs         ? `<div class="info-item"><strong>Obs:</strong> ${est.obs}</div>` : "",
+    ].join("");
+
+    return `
+    <div class="station" id="est-${idx}">
+      <div class="station-header" onclick="toggleEst(${idx})">
+        <div class="station-icon" style="background:${iconBg}">${icon}</div>
+        <div class="station-info">
+          <div class="station-name">${est.nome}</div>
+          <div class="station-fone">${est.fone||""}</div>
+        </div>
+        <div class="station-badges">
+          <span class="pill ${pillCls}">${dispN}/${total}</span>
+          <span class="pill pill-blue">${est.efetivo} mil.</span>
+          <span class="chevron" id="chev-${idx}">▾</span>
+        </div>
+      </div>
+      <div class="station-body" id="body-${idx}">
+        ${vtrsHtml}
+        ${infoItems ? `<div class="info-block">${infoItems}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleEst(i) {
+  const body = document.getElementById("body-"+i);
+  const chev = document.getElementById("chev-"+i);
+  const open = body.classList.toggle("open");
+  chev.classList.toggle("open", open);
+}
+
+function filtrar(val) {
+  if (dadosGlobais) renderizar(dadosGlobais, val.trim() || null);
+}
+
+// Iniciar
+carregar();
+setInterval(carregar, REFRESH_MS);
+</script>
+</body>
+</html>
