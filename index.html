@@ -193,9 +193,15 @@ let dadosGlobais = null;
 async function carregar() {
   try {
     document.getElementById("upd-status").textContent = "Buscando dados...";
-    const resp = await fetch(SCRIPT_URL + "?t=" + Date.now());
-    if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
-    const dados = await resp.json();
+    const dados = await new Promise((resolve, reject) => {
+      const cb = "cb_" + Date.now();
+      const s = document.createElement("script");
+      s.src = SCRIPT_URL + "?callback=" + cb + "&t=" + Date.now();
+      s.onerror = () => reject(new Error("Falha ao carregar"));
+      window[cb] = (data) => { delete window[cb]; s.remove(); resolve(data); };
+      setTimeout(() => { delete window[cb]; s.remove(); reject(new Error("Timeout")); }, 15000);
+      document.head.appendChild(s);
+    });
     dadosGlobais = dados;
     renderizar(dados);
     document.getElementById("upd-time").textContent = "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
