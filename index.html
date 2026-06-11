@@ -118,7 +118,7 @@
     <div class="sub" id="hdr-sub">Carregando...</div>
   </div>
   <div class="header-right">
-    <span class="pill pill-verde" id="pill-pront"><span class="dot dot-verde"></span>VERDE</span>
+    <span class="pill pill-verde" id="pill-pront"><span class="dot dot-verde" id="pill-dot"></span><span id="pill-txt">—</span></span>
     <span class="pill pill-gray" id="pill-ef">— mil.</span>
   </div>
 </div>
@@ -130,24 +130,19 @@
   <span id="upd-status">Aguardando dados</span>
 </div>
 
-<div class="stats">
+<div class="stats" style="grid-template-columns:repeat(3,1fr)">
   <div class="stat">
     <div class="stat-label">Efetivo total</div>
     <div class="stat-value" id="s-ef">—</div>
     <div class="stat-sub" id="s-ef-sub">militares</div>
   </div>
   <div class="stat">
-    <div class="stat-label">Disponíveis</div>
+    <div class="stat-label">Viaturas em operação</div>
     <div class="stat-value val-verde" id="s-disp">—</div>
     <div class="stat-sub" id="s-disp-sub">viaturas</div>
   </div>
   <div class="stat">
-    <div class="stat-label">Em atendimento</div>
-    <div class="stat-value val-amber" id="s-atend">—</div>
-    <div class="stat-sub">viaturas</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Manutenção / baixada</div>
+    <div class="stat-label">Baixadas / manutenção</div>
     <div class="stat-value val-red" id="s-manut">—</div>
     <div class="stat-sub">viaturas</div>
   </div>
@@ -217,9 +212,15 @@ async function carregar() {
 function renderizar(dados, filtro) {
   // Header
   document.getElementById("hdr-sub").textContent = dados.prontidao || "Prontidão ativa";
-  if (dados.coordenador) {
-    document.getElementById("pill-pront").innerHTML = '<span class="dot dot-verde"></span>VERDE';
-  }
+  const pront = (dados.prontidao || "").toUpperCase();
+  const pillEl = document.getElementById("pill-pront");
+  const dotEl  = document.getElementById("pill-dot");
+  const txtEl  = document.getElementById("pill-txt");
+  if (pront.includes("VERDE"))  { pillEl.className="pill pill-verde"; dotEl.className="dot dot-verde"; txtEl.textContent="VERDE"; }
+  else if (pront.includes("AZUL"))  { pillEl.className="pill pill-blue";  dotEl.className="dot"; dotEl.style.background="#185FA5"; txtEl.textContent="AZUL"; }
+  else if (pront.includes("AMAREL")) { pillEl.className="pill pill-amber"; dotEl.className="dot dot-amber"; txtEl.textContent="AMARELA"; }
+  else if (pront.includes("VERMELH")) { pillEl.className="pill pill-red";   dotEl.className="dot dot-red";   txtEl.textContent="VERMELHA"; }
+  else { pillEl.className="pill pill-gray"; txtEl.textContent = dados.prontidao || "—"; }
 
   // Stats
   let efTotal=0, disp=0, atend=0, manut=0, totalVtrs=0;
@@ -236,7 +237,6 @@ function renderizar(dados, filtro) {
   document.getElementById("s-ef-sub").textContent = (dados.estacoes||[]).length + " estações/bases";
   document.getElementById("s-disp").textContent = disp;
   document.getElementById("s-disp-sub").textContent = "de " + totalVtrs + " viaturas";
-  document.getElementById("s-atend").textContent = atend;
   document.getElementById("s-manut").textContent = manut;
   document.getElementById("pill-ef").textContent = efTotal + " mil.";
 
@@ -258,7 +258,7 @@ function renderizar(dados, filtro) {
         <h4>Noturno</h4>
         <div class="cobom-person"><span>Chefe:</span> ${cb.chefeNoturno||"—"}</div>
         <div class="cobom-person"><span>Despach.:</span> ${cb.despachNoturno||"—"}</div>
-        <div class="cobom-person"><span>CECOM:</span> ${cb.cecomNoturno||"—"}</div>
+        <div class="cobom-person"><span>CECOM:</span> ${cb.cecomNoturno||"—"} ${cb.cecomFone ? `· <strong>${cb.cecomFone}</strong>` : ""}</div>
       </div>
     </div>
     ${dados.coordenador ? `
