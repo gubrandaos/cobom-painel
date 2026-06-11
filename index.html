@@ -299,7 +299,6 @@ function renderizar(dados, filtro) {
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
             <span class="vtr-id">${v.id}</span>
-            <span class="vtr-status-lbl ${lblCls[v.status]||''}">${lblTxt[v.status]||v.status}</span>
             ${v.qt ? `<span class="vtr-qt">${v.qt} mil.</span>` : ""}
             ${v.fone ? `<span class="vtr-qt">${v.fone}</span>` : ""}
           </div>
