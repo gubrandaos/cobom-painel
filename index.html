@@ -243,9 +243,12 @@ function renderizar(dados, filtro) {
   // COBOM
   const cb = dados.cobom || {};
   document.getElementById("cobom-block").innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:6px">
       <div style="font-size:13px;font-weight:600">Central de Operações</div>
-      <div style="font-size:12px;color:var(--text2)">${cb.fone||""}</div>
+      <div style="font-size:12px;color:var(--text2);text-align:right;line-height:2">
+        <div>${cb.fone||""}</div>
+        ${cb.cecomFone ? `<div>${cb.cecomFone}</div>` : ""}
+      </div>
     </div>
     <div class="cobom-grid">
       <div class="cobom-col">
@@ -258,7 +261,10 @@ function renderizar(dados, filtro) {
         <h4>Noturno</h4>
         <div class="cobom-person"><span>Chefe:</span> ${cb.chefeNoturno||"—"}</div>
         <div class="cobom-person"><span>Despach.:</span> ${cb.despachNoturno||"—"}</div>
-        <div class="cobom-person"><span>CECOM:</span> ${cb.cecomNoturno||"—"} ${cb.cecomFone ? `· <strong>${cb.cecomFone}</strong>` : ""}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="cobom-person"><span>CECOM:</span> ${cb.cecomNoturno||"—"}</div>
+
+        </div>
       </div>
     </div>
     ${dados.coordenador ? `
